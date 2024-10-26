@@ -1,32 +1,38 @@
 <?php
 require __DIR__ . '/vendor/autoload.php';
 
-use Ramapriya\Request\Request;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Apofis\Test\Connector;
 
 function getGuest()
 {
-	$PostParams = Request::PostParams();
-	$arr=[];
-	$telephone=null;
-	foreach ($PostParams as $param)
+	$request = new Request($_GET,$_POST,[],$_COOKIE,$_FILES,$_SERVER);
+	$PostParams = $request->request;
+	$arr = [];
+	$telephone = null;
+	foreach ($PostParams->keys() as $param)
 	{
 		if ($param != "telephone")
 		{
-			$request = Request::Post($param);
-			$arr[$param] = $request;
+			$arr[$param] = $PostParams->get($param);
 		} else {
-			$telephone = Request::Post($param);
+			$telephone = $PostParams->get($param);
 		}
 	}
-	//проверка обязательного параметра
 	if ($telephone==null){
 		return ["Error" => "Нет обязательного параметра телефон"];
 	}
-	//выполняем операцию на бд
 	$connector= new Connector();
 	return $connector->getGuest($telephone);
 }
 
-header("Content-Type: application/json");
-echo json_encode(getGuest());
+$startTime = microtime(true);
+$memory = memory_get_usage();
+$result = json_encode(getGuest());
+$response = new Response(
+    $result,
+    Response::HTTP_OK,
+    ['content-type' => 'application/json','X-Debug-Time' => (microtime(true) - $startTime) / 1000 . ' ms', 'X-Debug-Memory' => (memory_get_usage() - $memory) / 1024 . ' kb']
+);
+$response->send();

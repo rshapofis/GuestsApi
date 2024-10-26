@@ -1,17 +1,19 @@
 <?php
 require __DIR__ . '/vendor/autoload.php';
 
-use Ramapriya\Request\Request;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Apofis\Test\Connector;
 
 
 function updateGuest()
 {
-	$PostParams = Request::PostParams();
+	$request = new Request($_GET,$_POST,[],$_COOKIE,$_FILES,$_SERVER);
+	$PostParams = $request->request;
 	$arr = [];
 	$telephone = null;
-	$params = ["name", "family", "email", "country", "telephone", "new_telephone"];
-	foreach ($PostParams as $param)
+	$params = ["name", "family", "email", "country", "telephone"];
+	foreach ($PostParams->keys() as $param)
 	{
 		if (!in_array($param,$params))
 		{
@@ -19,29 +21,24 @@ function updateGuest()
 		}
 		if ($param != "telephone")
 		{
-			$request = Request::Post($param);
-			$arr[$param] = $request;
+			$arr[$param] = $PostParams->get($param);
 		} else {
-			$telephone = Request::Post($param);
+			$telephone = $PostParams->get($param);
 		}
 	}
-	//проверка обязательного параметра
-	if ($telephone == null){
+	if ($telephone==null){
 		return ["Error" => "Нет обязательного параметра телефон"];
 	}
-	//проверка нужно ли подставлять страну от номера телефона
-	if (array_key_exists("new_telephone",$arr) && !array_key_exists("country",$arr))
-	{
-		$temp = checkTelephone($telephone);
-		if ($temp !== null) {
-			$arr["country"] = $temp;
-		}
-	}
-	//выполняем операцию на бд
 	$connector = new Connector();
 	return $connector->updateGuest($telephone, $arr);
 }
 
-header("Content-Type: application/json");
-echo json_encode(updateGuest());
-
+$startTime = microtime(true);
+$memory = memory_get_usage();
+$result = json_encode(updateGuest());
+$response = new Response(
+    $result,
+    Response::HTTP_OK,
+    ['content-type' => 'application/json','X-Debug-Time' => (microtime(true) - $startTime) / 1000 . ' ms', 'X-Debug-Memory' => (memory_get_usage() - $memory) / 1024 . ' kb']
+);
+$response->send();
