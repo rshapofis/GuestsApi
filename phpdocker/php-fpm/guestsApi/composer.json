@@ -1,0 +1,17 @@
+{
+    "name": "apofis/test",
+    "autoload": {
+        "psr-4": {
+            "Apofis\\Test\\": "src/"
+        },
+        "files": [
+        "src/Codes.php"
+        ]
+    },
+    "require": {
+        "ramapriya/http-request": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
+    }
+}
