@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>FAQ GuestsApi</title>
+		<title>GuestsApi</title>
 	</head>
 	<body>
 
